@@ -5,19 +5,17 @@ import numpy as np
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 from gtts import gTTS
-import requests
-import time
+import math
 
 class DeepGravityMapper:
     def __init__(self, target_domain):
         self.domain = target_domain
         self.ip_address = ""
-        self.results = []
         self.log_file = "gravity_exploration_report.csv"
         self.audio_file = "acoustic_pattern.mp3"
 
     def resolve_network(self):
-        """Mapeia o domínio para IPv4 e simula a 'profundidade' da rede."""
+        """Mapeia o domínio para IPv4."""
         try:
             self.ip_address = socket.gethostbyname(self.domain)
             print(f"[LOG] Entrelaçamento de Rede: {self.domain} -> {self.ip_address}")
@@ -27,49 +25,55 @@ class DeepGravityMapper:
             return False
 
     def generate_astrometric_grid(self):
-        """Usa Astropy para gerar pontos de hardware baseados em gravidade teórica."""
-        # Usamos o IP como semente para localizar um ponto no espaço profundo
-        ip_sum = sum([int(x) for x in self.ip_address.split('.')])
+        """Gera pontos de hardware respeitando os limites da física astronômica."""
+        # Semente baseada nos octetos do IP
+        ip_parts = [int(x) for x in self.ip_address.split('.')]
+        ip_sum = sum(ip_parts)
         
-        # Simulação de exploração entre profundidade (RA) e gravidade (Dec)
-        coord = SkyCoord(ra=ip_sum*u.degree, dec=(ip_sum/2)*u.degree, frame='icrs')
+        # RA (Ascensão Reta) pode ser de 0 a 360 - usamos o módulo para garantir
+        ra_val = ip_sum % 360
         
-        print(f"[LOG] Coordenadas de Grade Físicas: RA:{coord.ra}, DEC:{coord.dec}")
+        # CORREÇÃO DO ERRO: Declinação (Latitude) deve ser entre -90 e 90.
+        # Usamos o seno da soma dos octetos para mapear o valor para o intervalo [-1, 1]
+        # e então multiplicamos por 90 para cobrir toda a amplitude permitida.
+        dec_val = 90 * math.sin(math.radians(ip_sum))
+        
+        coord = SkyCoord(ra=ra_val*u.degree, dec=dec_val*u.degree, frame='icrs')
+        
+        print(f"[LOG] Coordenadas Físicas Validadas: RA:{coord.ra.value:.2f}°, DEC:{coord.dec.value:.2f}°")
         return coord
 
     def synthesize_acoustic_consonants(self, coord):
-        """Converte os dados em padrões acústicos (formato .mp3)."""
-        # Criamos uma 'frase' de dados baseada na física do mapeamento
-        acoustic_data = f"Ponto de Hardware mapeado em {coord.ra.value:.2f} graus. " \
-                        f"Gravidade detectada no IP {self.ip_address}. " \
-                        f"Padrão de frequência rítmica estabelecido."
+        """Converte os dados em padrões acústicos .mp3."""
+        acoustic_data = (f"Hardware em profundidade de {coord.ra.value:.2f} graus. "
+                        f"Vetor gravitacional de declinação em {coord.dec.value:.2f} graus. "
+                        f"Assinatura do IP {self.ip_address} processada.")
         
-        print(f"[LOG] Gerando áudio de pontos audíveis...")
+        print(f"[LOG] Sintetizando consoantes acústicas...")
         tts = gTTS(text=acoustic_data, lang='pt')
         tts.save(self.audio_file)
 
     def save_report(self, coord):
-        """Gera o relatório CSV detalhado."""
+        """Gera o relatório CSV."""
         with open(self.log_file, mode='w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(["Parametro", "Resultado", "Explicação Física"])
-            writer.writerow(["Dominio", self.domain, "Alvo do entrelaçamento web"])
-            writer.writerow(["IPv4", self.ip_address, "Assinatura eletromagnética do hardware"])
-            writer.writerow(["Ascensão Reta", coord.ra.value, "Profundidade na grade dimensional"])
-            writer.writerow(["Declinação", coord.dec.value, "Vetor de gravidade simulado"])
-            writer.writerow(["Status Áudio", "Gerado", "Consoantes acústicas em .mp3"])
+            writer.writerow(["Dominio", self.domain, "Alvo do mapeamento"])
+            writer.writerow(["IPv4", self.ip_address, "Assinatura eletromagnética"])
+            writer.writerow(["Ascensão Reta", f"{coord.ra.value:.4f}", "Profundidade na grade"])
+            writer.writerow(["Declinação", f"{coord.dec.value:.4f}", "Gravidade (Normalizada)"])
+            writer.writerow(["Status", "Sucesso", "Dados dentro dos limites de SkyCoord"])
 
     def run(self):
-        print(f"--- Iniciando Ferramenta de Exploração Gravidade-Profundidade ---")
+        print(f"--- Iniciando C2-Gravity Mapper ---")
         if self.resolve_network():
             coord = self.generate_astrometric_grid()
             self.synthesize_acoustic_consonants(coord)
             self.save_report(coord)
-            print(f"--- Processo Concluído ---")
-            print(f"Relatório: {self.log_file}")
-            print(f"Áudio: {self.audio_file}")
+            print(f"--- Processo Finalizado com Sucesso ---")
+            print(f"Log: {self.log_file} | Áudio: {self.audio_file}")
 
 if __name__ == "__main__":
-    target = input("Digite o domínio para mapeamento (ex: google.com): ")
+    target = input("Domínio alvo: ")
     mapper = DeepGravityMapper(target)
     mapper.run()
