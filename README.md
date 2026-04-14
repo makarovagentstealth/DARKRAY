@@ -1,5 +1,3 @@
----
-
 # 🛰️ DARKRAY: Deep-Gravity SIGINT & Network Mapper
 **Mapeamento de Ativos via Entrelaçamento de Dados e Grade Astrométrica de Hardware**
 
